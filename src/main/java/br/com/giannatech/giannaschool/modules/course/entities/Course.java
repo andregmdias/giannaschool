@@ -41,5 +41,5 @@ public class Course {
 
   @Column(name = "created_at")
   @UpdateTimestamp
-  private LocalDateTime updatedAt
+  private LocalDateTime updatedAt;
 }
