@@ -35,11 +35,9 @@ public class Course {
   @Column
   private boolean active;
 
-  @Column(name = "created_at")
   @CreationTimestamp
   private LocalDateTime createdAt;
 
-  @Column(name = "created_at")
   @UpdateTimestamp
   private LocalDateTime updatedAt;
 }

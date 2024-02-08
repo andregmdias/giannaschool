@@ -4,6 +4,6 @@ import br.com.giannatech.giannaschool.modules.course.entities.Course;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CourseRepository extends JpaRepository<UUID, Course> {
+public interface CourseRepository extends JpaRepository<Course, UUID> {
 
 }
