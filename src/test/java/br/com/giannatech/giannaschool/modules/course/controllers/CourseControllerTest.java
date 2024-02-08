@@ -1,10 +1,8 @@
 package br.com.giannatech.giannaschool.modules.course.controllers;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,55 +12,57 @@ import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCas
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-@WebMvcTest
-class CourseControllerTest {
+@WebMvcTest(CourseController.class)
+@AutoConfigureMockMvc
+public class CourseControllerTest {
 
-  @MockBean
-  CreateCourseUseCase createCourseUseCase;
   @Autowired
   private MockMvc mockMvc;
 
   @Autowired
   private ObjectMapper objectMapper;
 
+  @MockBean
+  private CreateCourseUseCase createCourseUseCase;
+
   @Test
-  @DisplayName("test create -> when all params are valid, should return a course")
   void testCreate_WhenAllParamsAreValidShouldReturnACourse() throws Exception {
-    var courseDTO = CreateCourseDTO.builder()
-        .name("Bar course")
-        .category("java")
+
+    CreateCourseDTO dto = CreateCourseDTO.builder()
+        .name("Java Course")
+        .category("Programming")
         .active(true)
         .build();
 
-    var course = Course.builder()
-        .id(UUID.randomUUID())
-        .name(courseDTO.getName())
-        .category(courseDTO.getCategory())
-        .active(courseDTO.isActive())
-        .createdAt(LocalDateTime.now())
-        .updatedAt(LocalDateTime.now())
-        .build();
+    LocalDateTime now = LocalDateTime.now();
 
-    given(createCourseUseCase.execute(courseDTO)).willReturn(course);
+    Course createdCourse = Course.builder()
+        .id(UUID.randomUUID())
+        .name(dto.getName())
+        .category(dto.getCategory())
+        .active(dto.isActive())
+        .createdAt(now)
+        .updatedAt(now)
+        .build();
+    when(createCourseUseCase.execute(any(CreateCourseDTO.class))).thenReturn(createdCourse);
 
     ResultActions response = mockMvc.perform(post("/courses")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(course)));
+        .content(objectMapper.writeValueAsString(dto)));
 
-    response.andDo(print())
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.id", notNullValue()))
-        .andExpect(jsonPath("$.name", is(courseDTO.getName())))
-        .andExpect(jsonPath("$.category", is(courseDTO.getCategory())))
-        .andExpect(jsonPath("$.active", is(courseDTO.isActive())));
+    response.andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.name").value(dto.getName()))
+        .andExpect(jsonPath("$.category").value(dto.getCategory()))
+        .andExpect(jsonPath("$.active").value(dto.isActive()));
   }
 }
