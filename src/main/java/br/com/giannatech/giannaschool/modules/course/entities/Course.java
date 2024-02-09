@@ -22,6 +22,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @Builder
 public class Course {
+
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;

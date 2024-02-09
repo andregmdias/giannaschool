@@ -1,6 +1,8 @@
 package br.com.giannatech.giannaschool.modules.course.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,6 +14,7 @@ import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCas
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,6 +38,7 @@ public class CourseControllerTest {
   private CreateCourseUseCase createCourseUseCase;
 
   @Test
+  @DisplayName("test create -> when all params are valid, should return a Course")
   void testCreate_WhenAllParamsAreValidShouldReturnACourse() throws Exception {
 
     CreateCourseDTO dto = CreateCourseDTO.builder()
@@ -64,5 +68,25 @@ public class CourseControllerTest {
         .andExpect(jsonPath("$.name").value(dto.getName()))
         .andExpect(jsonPath("$.category").value(dto.getCategory()))
         .andExpect(jsonPath("$.active").value(dto.isActive()));
+  }
+
+  @Test
+  @DisplayName("test create -> when required params are missing, should return an error")
+  void testCreate_WhenRequiredParamsAreMissingShouldReturnAnError() throws Exception {
+    CreateCourseDTO dto = CreateCourseDTO.builder()
+        .name("")
+        .category("")
+        .active(true)
+        .build();
+
+    ResultActions response = mockMvc.perform(post("/courses")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(dto)));
+
+    response.andExpect(status().isUnprocessableEntity())
+        .andExpect(jsonPath("$.name").value("Field [name] is required"))
+        .andExpect(jsonPath("$.category").value("Field [category] is required"));
+
+    verify(createCourseUseCase, never()).execute(any(CreateCourseDTO.class));
   }
 }
