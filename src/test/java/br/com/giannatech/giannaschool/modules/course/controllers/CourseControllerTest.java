@@ -1,9 +1,9 @@
 package br.com.giannatech.giannaschool.modules.course.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,7 +57,7 @@ public class CourseControllerTest {
         .createdAt(now)
         .updatedAt(now)
         .build();
-    when(createCourseUseCase.execute(any(CreateCourseDTO.class))).thenReturn(createdCourse);
+    given(createCourseUseCase.execute(any(CreateCourseDTO.class))).willReturn(createdCourse);
 
     ResultActions response = mockMvc.perform(post("/courses")
         .contentType(MediaType.APPLICATION_JSON)
