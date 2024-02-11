@@ -6,7 +6,9 @@ import br.com.giannatech.giannaschool.modules.course.repositories.CourseReposito
 import java.util.UUID;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class GetCourseByIdUseCase {
 
   @Autowired
@@ -19,7 +21,7 @@ public class GetCourseByIdUseCase {
     var course = courseRepository
         .findById(id)
         .orElseThrow(() -> new CourseNotFoundException("Course not found"));
-    
+
     return course;
   }
 }

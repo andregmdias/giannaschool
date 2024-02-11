@@ -1,16 +1,21 @@
 package br.com.giannatech.giannaschool.modules.course.controllers;
 
 import br.com.giannatech.giannaschool.modules.course.dtos.CreateCourseDTO;
+import br.com.giannatech.giannaschool.modules.course.dtos.UpdateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.entities.Course;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.UpdateCourseUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,6 +31,9 @@ public class CourseController {
   @Autowired
   private GetCoursesUseCase getCoursesUseCase;
 
+  @Autowired
+  private UpdateCourseUseCase updateCourseUseCase;
+
   @PostMapping
   public ResponseEntity<Course> create(@Valid @RequestBody CreateCourseDTO dto) {
     var course = createCourseUseCase.execute(dto);
@@ -39,5 +47,12 @@ public class CourseController {
   ) {
     var courseList = getCoursesUseCase.execute(name, category);
     return ResponseEntity.status(HttpStatus.OK).body(courseList);
+  }
+
+  @PutMapping(value = "{id}")
+  public ResponseEntity<Course> update(@PathVariable UUID id,
+      @RequestBody UpdateCourseDTO updateCourseDTO) {
+    var updatedCourse = updateCourseUseCase.execute(id, updateCourseDTO);
+    return ResponseEntity.ok(updatedCourse);
   }
 }

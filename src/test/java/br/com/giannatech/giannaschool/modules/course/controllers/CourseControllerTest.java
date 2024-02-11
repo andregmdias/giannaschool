@@ -8,13 +8,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.com.giannatech.giannaschool.exceptions.CourseNotFoundException;
 import br.com.giannatech.giannaschool.modules.course.dtos.CreateCourseDTO;
+import br.com.giannatech.giannaschool.modules.course.dtos.UpdateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.entities.Course;
+import br.com.giannatech.giannaschool.modules.course.mappers.UpdateCourseMapper;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.GetCourseByIdUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.UpdateCourseUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,10 +46,19 @@ public class CourseControllerTest {
   private ObjectMapper objectMapper;
 
   @MockBean
+  private UpdateCourseMapper updateCourseMapper;
+
+  @MockBean
   private CreateCourseUseCase createCourseUseCase;
 
   @MockBean
   private GetCoursesUseCase getCoursesUseCase;
+
+  @MockBean
+  private GetCourseByIdUseCase getCourseByIdUseCase;
+
+  @MockBean
+  private UpdateCourseUseCase updateCourseUseCase;
 
   @Test
   @DisplayName("test create -> when all params are valid, should return a Course")
@@ -146,26 +161,70 @@ public class CourseControllerTest {
         .updatedAt(LocalDateTime.now())
         .build();
 
-    var course1 = Course.builder()
+    given(getCoursesUseCase.execute("Foo", null)).willReturn(List.of(course0));
+
+    ResultActions response = mockMvc.perform(
+        get("/courses?name=Foo")
+    );
+
+    response.andExpectAll(
+        status().isOk(),
+        jsonPath("$", hasSize(1)),
+        jsonPath("$[0].name", is(course0.getName()))
+    );
+  }
+
+  @Test
+  @DisplayName("test update -> when the course exists with the given id and the update params are valid, should update the course")
+  void testCreate_WhenTheCourseExistsWithTheGivenIdAndTheParamsUpdateAreValidShouldUpdateTheCourse()
+      throws Exception {
+    var course0 = Course.builder()
         .id(UUID.randomUUID())
-        .name("Baz course")
-        .category("Bar category")
+        .name("Foo")
+        .category("Baz")
         .active(true)
         .createdAt(LocalDateTime.now())
         .updatedAt(LocalDateTime.now())
         .build();
 
-    given(getCoursesUseCase.execute("Foo", null)).willReturn(List.of(course0));
+    var updateCourseParams = UpdateCourseDTO.builder().name("Foo").category("Baz").build();
+
+    given(updateCourseUseCase.execute(course0.getId(), updateCourseParams)).willReturn(course0);
 
     ResultActions response = mockMvc.perform(
-        get("/courses")
+        put("/courses/" + course0.getId().toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateCourseParams))
     );
 
     response.andExpectAll(
         status().isOk(),
-        jsonPath("$", hasSize(2)),
-        jsonPath("$[0].name", is(course0.getName())),
-        jsonPath("$[1].name", is(course1.getName()))
+        jsonPath("$.id", is(course0.getId().toString())),
+        jsonPath("$.name", is(updateCourseParams.getName())),
+        jsonPath("$.category", is(updateCourseParams.getCategory()))
+    );
+  }
+
+  @Test
+  @DisplayName("test update -> when the course with the given Id doesnt exists, should thrown an exception")
+  void testCreate_WhenTheCourseWithTheGivenIdDoesntExistsShouldThrowAnException()
+      throws Exception {
+
+    var id = UUID.randomUUID();
+    var updateCourseParams = UpdateCourseDTO.builder().name("Foo").category("Baz").build();
+
+    given(updateCourseUseCase.execute(id, updateCourseParams)).willThrow(
+        new CourseNotFoundException("Course not found"));
+
+    ResultActions response = mockMvc.perform(
+        put("/courses/" + id.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateCourseParams))
+    );
+
+    response.andExpectAll(
+        status().isNotFound(),
+        jsonPath("$", is("Course not found"))
     );
   }
 }
