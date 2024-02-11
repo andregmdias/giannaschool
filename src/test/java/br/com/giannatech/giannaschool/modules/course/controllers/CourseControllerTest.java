@@ -4,8 +4,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -16,8 +18,8 @@ import br.com.giannatech.giannaschool.exceptions.CourseNotFoundException;
 import br.com.giannatech.giannaschool.modules.course.dtos.CreateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.dtos.UpdateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.entities.Course;
-import br.com.giannatech.giannaschool.modules.course.mappers.UpdateCourseMapper;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.DeleteCourseByIdUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCourseByIdUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.UpdateCourseUseCase;
@@ -46,9 +48,6 @@ public class CourseControllerTest {
   private ObjectMapper objectMapper;
 
   @MockBean
-  private UpdateCourseMapper updateCourseMapper;
-
-  @MockBean
   private CreateCourseUseCase createCourseUseCase;
 
   @MockBean
@@ -59,6 +58,9 @@ public class CourseControllerTest {
 
   @MockBean
   private UpdateCourseUseCase updateCourseUseCase;
+
+  @MockBean
+  private DeleteCourseByIdUseCase deleteCourseByIdUseCase;
 
   @Test
   @DisplayName("test create -> when all params are valid, should return a Course")
@@ -226,5 +228,28 @@ public class CourseControllerTest {
         status().isNotFound(),
         jsonPath("$", is("Course not found"))
     );
+  }
+
+  @Test
+  @DisplayName("test deleteById -> should delete the course with the given id")
+  void testCreate_ShouldDeleteTheCourseWithTheGivenId()
+      throws Exception {
+
+    var id = UUID.randomUUID();
+
+    var course0 = Course.builder()
+        .id(id)
+        .name("Foo")
+        .category("Baz")
+        .active(true)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    doNothing().when(deleteCourseByIdUseCase).execute(id);
+
+    ResultActions response = mockMvc.perform(delete("/courses/" + id.toString()));
+
+    response.andExpect(status().isNoContent());
   }
 }

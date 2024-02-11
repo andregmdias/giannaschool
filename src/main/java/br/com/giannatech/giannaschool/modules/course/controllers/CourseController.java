@@ -4,6 +4,7 @@ import br.com.giannatech.giannaschool.modules.course.dtos.CreateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.dtos.UpdateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.entities.Course;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.DeleteCourseByIdUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.UpdateCourseUseCase;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +36,9 @@ public class CourseController {
   @Autowired
   private UpdateCourseUseCase updateCourseUseCase;
 
+  @Autowired
+  private DeleteCourseByIdUseCase deleteCourseByIdUseCase;
+
   @PostMapping
   public ResponseEntity<Course> create(@Valid @RequestBody CreateCourseDTO dto) {
     var course = createCourseUseCase.execute(dto);
@@ -54,5 +59,11 @@ public class CourseController {
       @RequestBody UpdateCourseDTO updateCourseDTO) {
     var updatedCourse = updateCourseUseCase.execute(id, updateCourseDTO);
     return ResponseEntity.ok(updatedCourse);
+  }
+
+  @DeleteMapping(value = "{id}")
+  public ResponseEntity deleteById(@PathVariable UUID id) {
+    deleteCourseByIdUseCase.execute(id);
+    return ResponseEntity.noContent().build();
   }
 }

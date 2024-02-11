@@ -34,6 +34,7 @@ class CreateCourseUseCaseTest {
   void testExecute_shouldCreateACourseWithSuccess() {
     var courseDTO = CreateCourseDTO.builder().name("Bar course").category("java").active(true)
         .build();
+
     var course = Course.builder()
         .name(courseDTO.getName())
         .category(courseDTO.getCategory())
