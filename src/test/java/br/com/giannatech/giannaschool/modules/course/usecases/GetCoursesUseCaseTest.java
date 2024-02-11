@@ -58,6 +58,5 @@ class GetCoursesUseCaseTest {
     assertEquals(2, result.size());
     assertInstanceOf(Course.class, result.get(0));
     assertInstanceOf(Course.class, result.get(1));
-
   }
 }
