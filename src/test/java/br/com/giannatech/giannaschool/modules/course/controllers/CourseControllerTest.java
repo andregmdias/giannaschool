@@ -1,9 +1,12 @@
 package br.com.giannatech.giannaschool.modules.course.controllers;
 
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,8 +14,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import br.com.giannatech.giannaschool.modules.course.dtos.CreateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.entities.Course;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +41,9 @@ public class CourseControllerTest {
 
   @MockBean
   private CreateCourseUseCase createCourseUseCase;
+
+  @MockBean
+  private GetCoursesUseCase getCoursesUseCase;
 
   @Test
   @DisplayName("test create -> when all params are valid, should return a Course")
@@ -88,5 +96,76 @@ public class CourseControllerTest {
         .andExpect(jsonPath("$.category").value("Field [category] is required"));
 
     verify(createCourseUseCase, never()).execute(any(CreateCourseDTO.class));
+  }
+
+  @Test
+  @DisplayName("test index -> when has no search params, should return a list with the existent courses")
+  void testCreate_ShouldReturnAnListWithTheExistentCourses() throws Exception {
+
+    var course0 = Course.builder()
+        .id(UUID.randomUUID())
+        .name("Foo course")
+        .category("Bar category")
+        .active(true)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    var course1 = Course.builder()
+        .id(UUID.randomUUID())
+        .name("Baz course")
+        .category("Bar category")
+        .active(true)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    given(getCoursesUseCase.execute(null, null)).willReturn(List.of(course0, course1));
+
+    ResultActions response = mockMvc.perform(
+        get("/courses").contentType(MediaType.APPLICATION_JSON)
+    );
+
+    response.andExpectAll(
+        status().isOk(),
+        jsonPath("$", hasSize(2)),
+        jsonPath("$[0].name", is(course0.getName())),
+        jsonPath("$[1].name", is(course1.getName()))
+    );
+  }
+
+  @Test
+  @DisplayName("test index -> when has search params, should return a list according the given params")
+  void testCreate_ShouldReturnAnListAccordingTheGivenParams() throws Exception {
+    var course0 = Course.builder()
+        .id(UUID.randomUUID())
+        .name("Foo course")
+        .category("Bar category")
+        .active(true)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    var course1 = Course.builder()
+        .id(UUID.randomUUID())
+        .name("Baz course")
+        .category("Bar category")
+        .active(true)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    given(getCoursesUseCase.execute("Foo", null)).willReturn(List.of(course0));
+
+    ResultActions response = mockMvc.perform(
+        get("/courses")
+    );
+
+    response.andExpectAll(
+        status().isOk(),
+        jsonPath("$", hasSize(2)),
+        jsonPath("$[0].name", is(course0.getName())),
+        jsonPath("$[1].name", is(course1.getName()))
+    );
   }
 }
