@@ -64,6 +64,10 @@
       <groupId>org.modelmapper</groupId>
       <version>3.0.0</version>
     </dependency>
+    <dependency>
+      <artifactId>commons-lang3</artifactId>
+      <groupId>org.apache.commons</groupId>
+    </dependency>
   </dependencies>
   <description>Rocketseat Ignite Challenge 1</description>
   <groupId>br.com.giannatech</groupId>
