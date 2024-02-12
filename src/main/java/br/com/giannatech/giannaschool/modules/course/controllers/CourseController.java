@@ -6,6 +6,7 @@ import br.com.giannatech.giannaschool.modules.course.entities.Course;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.DeleteCourseByIdUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.ToggleCourseStatusUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.UpdateCourseUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/courses")
+@RequestMapping("/cursos")
 public class CourseController {
 
   @Autowired
@@ -38,6 +40,9 @@ public class CourseController {
 
   @Autowired
   private DeleteCourseByIdUseCase deleteCourseByIdUseCase;
+
+  @Autowired
+  private ToggleCourseStatusUseCase toggleCourseStatusUseCase;
 
   @PostMapping
   public ResponseEntity<Course> create(@Valid @RequestBody CreateCourseDTO dto) {
@@ -65,5 +70,12 @@ public class CourseController {
   public ResponseEntity deleteById(@PathVariable UUID id) {
     deleteCourseByIdUseCase.execute(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping(value = "{id}/active")
+  public ResponseEntity<Course> active(@PathVariable UUID id) {
+    var course = toggleCourseStatusUseCase.execute(id);
+
+    return ResponseEntity.ok(course);
   }
 }

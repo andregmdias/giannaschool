@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,8 +21,8 @@ import br.com.giannatech.giannaschool.modules.course.dtos.UpdateCourseDTO;
 import br.com.giannatech.giannaschool.modules.course.entities.Course;
 import br.com.giannatech.giannaschool.modules.course.usecases.CreateCourseUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.DeleteCourseByIdUseCase;
-import br.com.giannatech.giannaschool.modules.course.usecases.GetCourseByIdUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.GetCoursesUseCase;
+import br.com.giannatech.giannaschool.modules.course.usecases.ToggleCourseStatusUseCase;
 import br.com.giannatech.giannaschool.modules.course.usecases.UpdateCourseUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
@@ -54,10 +55,10 @@ public class CourseControllerTest {
   private GetCoursesUseCase getCoursesUseCase;
 
   @MockBean
-  private GetCourseByIdUseCase getCourseByIdUseCase;
+  private UpdateCourseUseCase updateCourseUseCase;
 
   @MockBean
-  private UpdateCourseUseCase updateCourseUseCase;
+  private ToggleCourseStatusUseCase toggleCourseStatusUseCase;
 
   @MockBean
   private DeleteCourseByIdUseCase deleteCourseByIdUseCase;
@@ -84,7 +85,7 @@ public class CourseControllerTest {
         .build();
     given(createCourseUseCase.execute(any(CreateCourseDTO.class))).willReturn(createdCourse);
 
-    ResultActions response = mockMvc.perform(post("/courses")
+    ResultActions response = mockMvc.perform(post("/cursos")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(dto)));
 
@@ -104,7 +105,7 @@ public class CourseControllerTest {
         .active(true)
         .build();
 
-    ResultActions response = mockMvc.perform(post("/courses")
+    ResultActions response = mockMvc.perform(post("/cursos")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(dto)));
 
@@ -117,7 +118,7 @@ public class CourseControllerTest {
 
   @Test
   @DisplayName("test index -> when has no search params, should return a list with the existent courses")
-  void testCreate_ShouldReturnAnListWithTheExistentCourses() throws Exception {
+  void testIndex_ShouldReturnAnListWithTheExistentCourses() throws Exception {
 
     var course0 = Course.builder()
         .id(UUID.randomUUID())
@@ -140,7 +141,7 @@ public class CourseControllerTest {
     given(getCoursesUseCase.execute(null, null)).willReturn(List.of(course0, course1));
 
     ResultActions response = mockMvc.perform(
-        get("/courses").contentType(MediaType.APPLICATION_JSON)
+        get("/cursos").contentType(MediaType.APPLICATION_JSON)
     );
 
     response.andExpectAll(
@@ -153,7 +154,7 @@ public class CourseControllerTest {
 
   @Test
   @DisplayName("test index -> when has search params, should return a list according the given params")
-  void testCreate_ShouldReturnAnListAccordingTheGivenParams() throws Exception {
+  void testIndex_ShouldReturnAnListAccordingTheGivenParams() throws Exception {
     var course0 = Course.builder()
         .id(UUID.randomUUID())
         .name("Foo course")
@@ -166,7 +167,7 @@ public class CourseControllerTest {
     given(getCoursesUseCase.execute("Foo", null)).willReturn(List.of(course0));
 
     ResultActions response = mockMvc.perform(
-        get("/courses?name=Foo")
+        get("/cursos?name=Foo")
     );
 
     response.andExpectAll(
@@ -178,7 +179,7 @@ public class CourseControllerTest {
 
   @Test
   @DisplayName("test update -> when the course exists with the given id and the update params are valid, should update the course")
-  void testCreate_WhenTheCourseExistsWithTheGivenIdAndTheParamsUpdateAreValidShouldUpdateTheCourse()
+  void testUpdate_WhenTheCourseExistsWithTheGivenIdAndTheParamsUpdateAreValidShouldUpdateTheCourse()
       throws Exception {
     var course0 = Course.builder()
         .id(UUID.randomUUID())
@@ -194,7 +195,7 @@ public class CourseControllerTest {
     given(updateCourseUseCase.execute(course0.getId(), updateCourseParams)).willReturn(course0);
 
     ResultActions response = mockMvc.perform(
-        put("/courses/" + course0.getId().toString())
+        put("/cursos/" + course0.getId().toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(updateCourseParams))
     );
@@ -209,7 +210,7 @@ public class CourseControllerTest {
 
   @Test
   @DisplayName("test update -> when the course with the given Id doesnt exists, should thrown an exception")
-  void testCreate_WhenTheCourseWithTheGivenIdDoesntExistsShouldThrowAnException()
+  void testUpdate_WhenTheCourseWithTheGivenIdDoesntExistsShouldThrowAnException()
       throws Exception {
 
     var id = UUID.randomUUID();
@@ -219,7 +220,7 @@ public class CourseControllerTest {
         new CourseNotFoundException("Course not found"));
 
     ResultActions response = mockMvc.perform(
-        put("/courses/" + id.toString())
+        put("/cursos/" + id.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(updateCourseParams))
     );
@@ -232,7 +233,7 @@ public class CourseControllerTest {
 
   @Test
   @DisplayName("test deleteById -> should delete the course with the given id")
-  void testCreate_ShouldDeleteTheCourseWithTheGivenId()
+  void testDeleteById_ShouldDeleteTheCourseWithTheGivenId()
       throws Exception {
 
     var id = UUID.randomUUID();
@@ -248,8 +249,59 @@ public class CourseControllerTest {
 
     doNothing().when(deleteCourseByIdUseCase).execute(id);
 
-    ResultActions response = mockMvc.perform(delete("/courses/" + id.toString()));
+    ResultActions response = mockMvc.perform(delete("/cursos/" + id.toString()));
 
     response.andExpect(status().isNoContent());
+  }
+
+  @Test
+  @DisplayName("test active -> when the course exists with the given id, should toggle the active status")
+  void testCreate_WhenTheCourseExistsWithTheGivenIdAShouldToggleTheActiveStatus()
+      throws Exception {
+    var course0 = Course.builder()
+        .id(UUID.randomUUID())
+        .name("Foo")
+        .category("Baz")
+        .active(false)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
+
+    given(toggleCourseStatusUseCase.execute(course0.getId())).willReturn(course0);
+
+    ResultActions response = mockMvc.perform(
+        patch("/cursos/" + course0.getId().toString() + "/active")
+            .contentType(MediaType.APPLICATION_JSON)
+    );
+
+    response.andExpectAll(
+        status().isOk(),
+        jsonPath("$.id", is(course0.getId().toString())),
+        jsonPath("$.name", is(course0.getName())),
+        jsonPath("$.category", is(course0.getCategory())),
+        jsonPath("$.active", is(false))
+    );
+  }
+
+  @Test
+  @DisplayName("test active -> when the course with the given Id doesnt exists, should thrown an exception")
+  void testActive_WhenTheCourseWithTheGivenIdDoesntExistsShouldThrowAnException()
+      throws Exception {
+
+    var id = UUID.randomUUID();
+
+    given(toggleCourseStatusUseCase.execute(id)).willThrow(
+        new CourseNotFoundException("Course not found")
+    );
+
+    ResultActions response = mockMvc.perform(
+        patch("/cursos/" + id.toString() + "/active")
+            .contentType(MediaType.APPLICATION_JSON)
+    );
+
+    response.andExpectAll(
+        status().isNotFound(),
+        jsonPath("$", is("Course not found"))
+    );
   }
 }
